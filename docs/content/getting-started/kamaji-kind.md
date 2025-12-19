@@ -3,7 +3,7 @@ This guide will lead you through the process of creating a working Kamaji setup 
 
 !!! warning "Development Only"
     Run Kamaji on kind only for development or learning purposes.
-    
+
     Kamaji is designed to be run on production-grade Kubernetes clusters, such as those provided by cloud providers or on-premises solutions. Kind is not a production-grade Kubernetes cluster, and it is not recommended to run in production environments.
 
 ## Summary
@@ -27,21 +27,16 @@ This will take a short while for the kind cluster to be created.
 
 ## Installing Cert-Manager
 
-Kamaji has a dependency on Cert Manager, as it uses dynamic admission control, validating and mutating webhook configurations which are secured by a TLS communication, these certificates are managed by `cert-manager`. Hence, it needs to be added. 
+Kamaji has a dependency on Cert Manager, as it uses dynamic admission control, validating and mutating webhook configurations which are secured by a TLS communication, these certificates are managed by `cert-manager`. Hence, it needs to be added.
 
-Add the Bitnami Repo to the Helm Manager.
-
-```
-helm repo add bitnami https://charts.bitnami.com/bitnami
-```
-
-Install Cert Manager using Helm
+Install Cert Manager using Helm:
 
 ```
-helm upgrade --install cert-manager bitnami/cert-manager \
-  --namespace certmanager-system \
+helm install \
+  cert-manager oci://quay.io/jetstack/charts/cert-manager \
+  --namespace cert-manager \
   --create-namespace \
-  --set "installCRDs=true"
+  --set crds.enabled=true
 ```
 
 This will install cert-manager to the cluster. You can watch the progress of the installation on the cluster using the command
@@ -50,12 +45,22 @@ This will install cert-manager to the cluster. You can watch the progress of the
 kubectl get pods -Aw
 ```
 
-## Installing MetalLb 
+## Installing MetalLb
 
-MetalLB is used in order to dynamically assign IP addresses to the components, and also define custom IP Address Pools. Install MetalLb using the `kubectl` command for apply the manifest:
+MetalLB is used in order to dynamically assign IP addresses to the components, and also define custom IP Address Pools.
+
+Add the metallb helm repo:
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.7/config/manifests/metallb-native.yaml
+helm repo add metallb https://metallb.github.io/metallb
+```
+
+Install MetallB using Helm:
+
+```
+helm install metallb metallb/metallb \
+  --namespace=metallb-system \
+  --create-namespace
 ```
 
 This will install MetalLb onto the cluster with all the necessary resources.
@@ -110,7 +115,7 @@ helm upgrade --install kamaji clastix/kamaji \
 - Watch the progress of the deployments
 
 ```
-kubectl get pods -Aw 
+kubectl get pods -Aw
 ```
 
 - Verify by first checking Kamaji CRDs
